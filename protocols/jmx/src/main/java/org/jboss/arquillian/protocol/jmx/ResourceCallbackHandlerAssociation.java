@@ -14,20 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.testenricher.osgi;
+package org.jboss.arquillian.protocol.jmx;
 
-import org.osgi.framework.BundleContext;
 
 /**
- * BundleContextHolder
- * 
+ * A thread local {@link ResourceCallbackHandler} association
+ *
  * @author thomas.diesler@jboss.com
- * @version $Revision: $
+ * @author <a href="david@redhat.com">David Bosschaert</a>
+ * @since 18-Nov-2010
  */
-public interface BundleContextHolder
+public final class ResourceCallbackHandlerAssociation
 {
-   /** The ObjectName for this service: jboss.arquillian:service=bundle-context */
-   String OBJECT_NAME = "jboss.arquillian:service=bundle-context";
-   
-   BundleContext getBundleContext();
+   private static ThreadLocal<ResourceCallbackHandler> association = new ThreadLocal<ResourceCallbackHandler>();
+
+   public static ResourceCallbackHandler getCallbackHandler()
+   {
+      return association.get();
+   }
+
+   public static void setCallbackHandler(ResourceCallbackHandler handler)
+   {
+      association.set(handler);
+   }
 }
