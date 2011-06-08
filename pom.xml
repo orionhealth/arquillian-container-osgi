@@ -24,7 +24,7 @@
 
     <!-- Properties -->
     <properties>
-        <version.arquillian_core>1.0.0.Beta2-SNAPSHOT</version.arquillian_core>
+        <version.arquillian_core>1.0.0.Beta2</version.arquillian_core>
         <version.shrinkwrap_shrinkwrap>1.0.0-beta-2</version.shrinkwrap_shrinkwrap>
         <version.junit_junit>4.8.1</version.junit_junit>
         <version.javax.inject_javax.inject>1</version.javax.inject_javax.inject>
@@ -36,6 +36,12 @@
         <version.jboss_logging>3.0.0.Beta4</version.jboss_logging>
         <version.jboss_logmanager>1.2.0.CR8</version.jboss_logmanager>
     </properties>
+
+    <scm>
+        <connection>scm:git:git://git@github.com:arquillian/arquillian-container-osgi.git</connection>
+        <developerConnection>scm:git:ssh://github.com/arquillian/arquillian-container-osgi.git</developerConnection>
+        <url>git://github.com/arquillian/arquillian-container-osgi.git</url>
+    </scm>
 
     <dependencyManagement>
         <dependencies>
@@ -115,6 +121,17 @@
                             <value>org.jboss.logmanager.LogManager</value>
                         </property>
                     </systemProperties>
+                </configuration>
+            </plugin>
+            <!-- Maven Release Plugin Configuration -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <pushChanges>false</pushChanges>
+                    <localCheckout>true</localCheckout>
                 </configuration>
             </plugin>
         </plugins>
