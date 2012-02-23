@@ -143,9 +143,16 @@ public class RemoteDeployableContainer implements DeployableContainer<RemoteCont
 
     private BundleHandle installBundle(VirtualFile virtualFile) throws BundleException, IOException {
         BundleInfo info = BundleInfo.createBundleInfo(virtualFile);
-        String streamURL = info.getRoot().getStreamURL().toExternalForm();
+
+        SimpleHTTPServer simpleHTTPServer = new SimpleHTTPServer(virtualFile);
+        simpleHTTPServer.start();
+
+        String streamURL = simpleHTTPServer.getUrl() + "/" + virtualFile.getName();
+
         FrameworkMBean frameworkMBean = jmxSupport.getFrameworkMBean();
         long bundleId = frameworkMBean.installBundleFromURL(info.getLocation(), streamURL);
+
+        simpleHTTPServer.shutdown();
         return new BundleHandle(bundleId, info.getSymbolicName());
     }
 
