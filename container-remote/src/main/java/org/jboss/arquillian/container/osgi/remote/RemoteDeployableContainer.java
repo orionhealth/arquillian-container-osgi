@@ -151,6 +151,7 @@ public class RemoteDeployableContainer implements DeployableContainer<RemoteCont
 
         FrameworkMBean frameworkMBean = jmxSupport.getFrameworkMBean();
         long bundleId = frameworkMBean.installBundleFromURL(info.getLocation(), streamURL);
+        frameworkMBean.refreshBundle(bundleId);
 
         simpleHTTPServer.shutdown();
         return new BundleHandle(bundleId, info.getSymbolicName());
