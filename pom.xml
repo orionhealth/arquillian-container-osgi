@@ -61,6 +61,11 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.osgi.vfs</groupId>
+                <artifactId>jbosgi-vfs</artifactId>
+                <version>${version.jboss_osgi_vfs}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.osgi.vfs</groupId>
                 <artifactId>jbosgi-vfs30</artifactId>
                 <version>${version.jboss_osgi_vfs}</version>
             </dependency>
@@ -166,7 +171,7 @@
         <module>protocol-osgi</module>
         <module>bundle</module>
         <module>container-common</module>
-        <module>container-embedded</module>
+        <!--<module>container-embedded</module>-->
         <module>container-remote</module>
     </modules>
 

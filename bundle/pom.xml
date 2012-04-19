@@ -28,20 +28,26 @@
                         <Bundle-Activator>org.jboss.arquillian.osgi.ArquillianBundleActivator</Bundle-Activator>
                         <Export-Package />
                         <Import-Package>
+                            javax.activation,
                             javax.management*,
                             javax.naming,
+                            javax.xml*,
+                            org.w3c.dom,
                             org.jboss.logging;version="[3.0,4.0)",
                             org.osgi.framework;version="[1.5,2.0)",
+                            org.osgi.framework.launch;version="[1.0,2.0)",
                             org.osgi.service.packageadmin;version="[1.2,2.0)",
                             org.osgi.service.startlevel;version="[1.1,2.0)",
                             org.osgi.util.tracker;version="[1.4,2.0)",
                         </Import-Package>
                         <Private-Package>
-                            org.jboss.arquillian.osgi,
+                            org.jboss.arquillian.osgi;-split-package:=merge-first,
                         </Private-Package>
-                        <DynamicImport-Package>*</DynamicImport-Package>
                         <Embed-Transitive>true</Embed-Transitive>
                         <Embed-Dependency>
+                            args4j;inline=false,
+                            arquillian-config-api;inline=false,
+                            arquillian-config-impl-base;inline=false,
                             arquillian-core-api;inline=false,
                             arquillian-core-impl-base;inline=false,
                             arquillian-core-spi;inline=false,
@@ -60,8 +66,11 @@
                             shrinkwrap-api;inline=false,
                             shrinkwrap-impl-base;inline=false,
                             shrinkwrap-spi;inline=false,
+                            shrinkwrap-descriptors-api;inline=false,
+                            shrinkwrap-descriptors-spi;inline=false,
                             javax.inject;inline=false,
                             jbosgi-spi;inline=false,
+                            jbosgi-vfs;inline=false,
                             junit;inline=false,
                         </Embed-Dependency>
                         <_exportcontents>
@@ -109,6 +118,19 @@
     <!-- Dependencies -->
     <dependencies>
         <dependency>
+            <groupId>args4j</groupId>
+            <artifactId>args4j</artifactId>
+            <version>2.0.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-impl-base</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-jmx</artifactId>
         </dependency>
@@ -136,6 +158,14 @@
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-osgi</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-spi</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.inject</groupId>

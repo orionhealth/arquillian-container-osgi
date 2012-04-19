@@ -36,8 +36,10 @@ import org.jboss.logging.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleReference;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.SynchronousBundleListener;
 
 /**
  * This is the Arquillian {@link BundleActivator}.
@@ -47,36 +49,45 @@ import org.osgi.framework.ServiceReference;
  * @author thomas.diesler@jboss.com
  * @since 17-May-2009
  */
-public class ArquillianBundleActivator implements BundleActivator {
+public class ArquillianBundleActivator implements BundleActivator, SynchronousBundleListener {
     // Provide logging
     private static Logger log = Logger.getLogger(ArquillianBundleActivator.class);
 
     private JMXTestRunner testRunner;
 
+    private ArrayList<Bundle> bundles;
+
+    @Override
     public void start(final BundleContext context) throws Exception {
+        this.bundles = new ArrayList<Bundle>();
 
         final BundleContext sysContext = context.getBundle(0).getBundleContext();
         final TestClassLoader testClassLoader = new TestClassLoader() {
-
             @Override
-            public Class<?> loadTestClass(String className) throws ClassNotFoundException {
-                Bundle arqBundle = context.getBundle();
+            public Class<?> loadTestClass(final String className) throws ClassNotFoundException {
+                for (final Bundle bundle : ArquillianBundleActivator.this.bundles) {
+                    try {
+                        return bundle.loadClass(className);
+                    } catch (final ClassNotFoundException _) {
+                    }
+                }
+                final Bundle arqBundle = context.getBundle();
                 return arqBundle.loadClass(className);
             }
         };
 
         // Register the JMXTestRunner
-        MBeanServer mbeanServer = getMBeanServer(context);
-        testRunner = new JMXTestRunner(testClassLoader) {
+        final MBeanServer mbeanServer = getMBeanServer(context);
+        this.testRunner = new JMXTestRunner(testClassLoader) {
 
             @Override
-            public byte[] runTestMethod(String className, String methodName) {
+            public byte[] runTestMethod(final String className, final String methodName) {
                 Bundle bundle = null;
                 try {
-                    Class<?> testClass = testClassLoader.loadTestClass(className);
-                    BundleReference bundleRef = (BundleReference) testClass.getClassLoader();
+                    final Class<?> testClass = testClassLoader.loadTestClass(className);
+                    final BundleReference bundleRef = (BundleReference) testClass.getClassLoader();
                     bundle = bundleRef.getBundle();
-                } catch (ClassNotFoundException e) {
+                } catch (final ClassNotFoundException e) {
                     // ignore
                 }
                 BundleAssociation.setBundle(bundle);
@@ -84,20 +95,23 @@ public class ArquillianBundleActivator implements BundleActivator {
                 return super.runTestMethod(className, methodName);
             }
         };
-        testRunner.registerMBean(mbeanServer);
+        this.testRunner.registerMBean(mbeanServer);
+        context.addBundleListener(this);
     }
 
-    public void stop(BundleContext context) throws Exception {
+    @Override
+    public void stop(final BundleContext context) throws Exception {
+        context.removeBundleListener(this);
         // Unregister the JMXTestRunner
-        MBeanServer mbeanServer = getMBeanServer(context);
-        testRunner.unregisterMBean(mbeanServer);
+        final MBeanServer mbeanServer = getMBeanServer(context);
+        this.testRunner.unregisterMBean(mbeanServer);
     }
 
-    private MBeanServer getMBeanServer(BundleContext context) {
+    private MBeanServer getMBeanServer(final BundleContext context) {
         // Check if the MBeanServer is registered as an OSGi service
-        ServiceReference sref = context.getServiceReference(MBeanServer.class.getName());
+        final ServiceReference sref = context.getServiceReference(MBeanServer.class.getName());
         if (sref != null) {
-            MBeanServer mbeanServer = (MBeanServer) context.getService(sref);
+            final MBeanServer mbeanServer = (MBeanServer) context.getService(sref);
             log.debug("Found MBeanServer fom service: " + mbeanServer.getDefaultDomain());
             return mbeanServer;
         }
@@ -109,9 +123,10 @@ public class ArquillianBundleActivator implements BundleActivator {
     private MBeanServer findOrCreateMBeanServer() {
         MBeanServer mbeanServer = null;
 
-        ArrayList<MBeanServer> serverArr = MBeanServerFactory.findMBeanServer(null);
-        if (serverArr.size() > 1)
+        final ArrayList<MBeanServer> serverArr = MBeanServerFactory.findMBeanServer(null);
+        if (serverArr.size() > 1) {
             log.warn("Multiple MBeanServer instances: " + serverArr);
+        }
 
         if (serverArr.size() > 0) {
             mbeanServer = serverArr.get(0);
@@ -124,5 +139,19 @@ public class ArquillianBundleActivator implements BundleActivator {
         }
 
         return mbeanServer;
+    }
+
+    @Override
+    public void bundleChanged(final BundleEvent event) {
+        if (event.getBundle().getHeaders().get("ArquillianTestBundle") != null) {
+            switch (event.getType()) {
+                case BundleEvent.RESOLVED:
+                    this.bundles.add(event.getBundle());
+                    break;
+                case BundleEvent.UNINSTALLED:
+                    this.bundles.remove(event.getBundle());
+                    break;
+            }
+        }
     }
 }

@@ -98,6 +98,8 @@ public abstract class AbstractOSGiApplicationArchiveProcessor implements Applica
             builder.addManifestHeader(key, value);
         }
 
+        builder.addManifestHeader("ArquillianTestBundle", "true");
+
         // Export the test class package
         builder.addExportPackages(javaClass);
 

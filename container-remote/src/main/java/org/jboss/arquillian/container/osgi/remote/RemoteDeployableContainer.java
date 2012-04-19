@@ -89,10 +89,10 @@ public class RemoteDeployableContainer implements DeployableContainer<RemoteCont
 
     @Override
     public void start() throws LifecycleException {
-        List<BundleHandle> bundles = getBundles();
-        if (getInstalledBundle(bundles, "arquillian-osgi-bundle") == null) {
-            installBundle("arquillian-osgi-bundle", true);
-        }
+//        List<BundleHandle> bundles = getBundles();
+//        if (getInstalledBundle(bundles, "arquillian-osgi-bundle") == null) {
+//            installBundle("arquillian-osgi-bundle", true);
+//        }
     }
 
     @Override
@@ -142,7 +142,7 @@ public class RemoteDeployableContainer implements DeployableContainer<RemoteCont
     }
 
     private BundleHandle installBundle(VirtualFile virtualFile) throws BundleException, IOException {
-        BundleInfo info = BundleInfo.createBundleInfo(virtualFile);
+//        BundleInfo info = BundleInfo.createBundleInfo(virtualFile);
 
         SimpleHTTPServer simpleHTTPServer = new SimpleHTTPServer(virtualFile);
         simpleHTTPServer.start();
@@ -150,11 +150,13 @@ public class RemoteDeployableContainer implements DeployableContainer<RemoteCont
         String streamURL = simpleHTTPServer.getUrl() + "/" + virtualFile.getName();
 
         FrameworkMBean frameworkMBean = jmxSupport.getFrameworkMBean();
-        long bundleId = frameworkMBean.installBundleFromURL(info.getLocation(), streamURL);
+//        long bundleId = frameworkMBean.installBundleFromURL(info.getLoaction(), streamURL);
+        long bundleId = frameworkMBean.installBundleFromURL(streamURL, streamURL);
         frameworkMBean.refreshBundle(bundleId);
 
         simpleHTTPServer.shutdown();
-        return new BundleHandle(bundleId, info.getSymbolicName());
+//        return new BundleHandle(bundleId, info.getSymbolicName());
+        return new BundleHandle(bundleId, virtualFile.getName());
     }
 
     @Override
