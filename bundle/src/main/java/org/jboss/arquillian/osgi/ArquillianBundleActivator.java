@@ -24,6 +24,11 @@ package org.jboss.arquillian.osgi;
 // $Id$
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -55,19 +60,23 @@ public class ArquillianBundleActivator implements BundleActivator, SynchronousBu
 
     private JMXTestRunner testRunner;
 
-    private ArrayList<Bundle> bundles;
+    private final Map<Bundle, Semaphore> bundleSemaphores = new ConcurrentHashMap<Bundle, Semaphore>();
 
     @Override
     public void start(final BundleContext context) throws Exception {
-        this.bundles = new ArrayList<Bundle>();
-
         final BundleContext sysContext = context.getBundle(0).getBundleContext();
         final TestClassLoader testClassLoader = new TestClassLoader() {
             @Override
             public Class<?> loadTestClass(final String className) throws ClassNotFoundException {
-                for (final Bundle bundle : ArquillianBundleActivator.this.bundles) {
+                for (final Entry<Bundle, Semaphore> entry : ArquillianBundleActivator.this.bundleSemaphores.entrySet()) {
+                    final Bundle bundle = entry.getKey();
+                    final Semaphore semaphore = entry.getValue();
                     try {
+                        if (semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                            semaphore.release();
+                        }
                         return bundle.loadClass(className);
+                    } catch (final InterruptedException _) {
                     } catch (final ClassNotFoundException _) {
                     }
                 }
@@ -145,11 +154,14 @@ public class ArquillianBundleActivator implements BundleActivator, SynchronousBu
     public void bundleChanged(final BundleEvent event) {
         if (event.getBundle().getHeaders().get("ArquillianTestBundle") != null) {
             switch (event.getType()) {
+                case BundleEvent.INSTALLED:
+                    this.bundleSemaphores.put(event.getBundle(), new Semaphore(0));
+                    break;
                 case BundleEvent.RESOLVED:
-                    this.bundles.add(event.getBundle());
+                    this.bundleSemaphores.get(event.getBundle()).release();
                     break;
                 case BundleEvent.UNINSTALLED:
-                    this.bundles.remove(event.getBundle());
+                    this.bundleSemaphores.remove(event.getBundle()).release();
                     break;
             }
         }
